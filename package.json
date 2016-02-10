@@ -1,0 +1,30 @@
+{
+  "name": "heb-greg-date-picker",
+  "version": "1.0.0",
+  "description": "A simple JavaScript widget Hebrew/Gregorian date picker",
+  "main": "main.js",
+  "scripts": {
+    "prestart": "npm install",
+    "start": "webpack-dev-server --hot"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amos-nesher/HebGregDatePicker.git"
+  },
+  "author": "Amos Nesher <amos DOT nesher AT gmail DOT com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/amos-nesher/HebGregDatePicker/issues"
+  },
+  "homepage": "https://github.com/amos-nesher/HebGregDatePicker#readme",
+  "devDependencies": {
+    "css-loader": "0.23.1",
+    "style-loader": "0.13.0",
+    "webpack": "1.12.13",
+    "webpack-dev-server": "1.14.1"
+  },
+
+  "dependencies": {
+    "jquery": "1.12.0"
+  }
+}
