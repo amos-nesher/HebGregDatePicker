@@ -2,7 +2,7 @@
  * Created by neshera on 2/11/2016.
  */
 
-(function(window, $) {
+(function(window) {
     "use restrict";
 
     /*
@@ -454,4 +454,4 @@
     };
 
 
-})(window, jQuery);
+})(window);
