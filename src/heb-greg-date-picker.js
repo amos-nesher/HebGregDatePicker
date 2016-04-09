@@ -2,7 +2,13 @@
  * Created by neshera on 2/18/2016.
  */
 
-(function(window, $) {
+/**
+ * TODO mark error if year (greg and hebrew) are not correct
+ * TODO handle Adar A and Adar B for leap and non leap years
+ * TODO make the box be below the container (or on top) - according to the settings.
+ */
+
+(function(window, $, HebGregConverter, HebYearConverter) {
     "use restrict";
 
     var i18n_he_IL = {
@@ -96,12 +102,13 @@
     ];
 
     var hebrewDaysList = [
+        "dummy-zero",
         i18n("heb-day-1"), i18n("heb-day-2"), i18n("heb-day-3"), i18n("heb-day-4"), i18n("heb-day-5"),
         i18n("heb-day-6"), i18n("heb-day-7"), i18n("heb-day-8"), i18n("heb-day-9"), i18n("heb-day-10"),
         i18n("heb-day-11"), i18n("heb-day-12"), i18n("heb-day-13"), i18n("heb-day-14"), i18n("heb-day-15"),
         i18n("heb-day-16"), i18n("heb-day-17"), i18n("heb-day-18"), i18n("heb-day-19"), i18n("heb-day-20"),
         i18n("heb-day-21"), i18n("heb-day-22"), i18n("heb-day-23"), i18n("heb-day-24"), i18n("heb-day-25"),
-        i18n("heb-day-26"), i18n("heb-day-27"), i18n("heb-day-28"), i18n("heb-day-29"), i18n("heb-day-30"),
+        i18n("heb-day-26"), i18n("heb-day-27"), i18n("heb-day-28"), i18n("heb-day-29"), i18n("heb-day-30")
     ];
 
     var gregMonthsList = [
@@ -122,13 +129,15 @@
     var alreadyConstruct = false;
 
     var UIManager = {
-        init: function(containerEl, settings) {
+        init: function(containerEl, settings, currentDate) {
             if (alreadyConstruct) {
                 return;
             }
 
-            var i;
-            var html = "<div class='heb-greg-date-picker ";
+            var i,
+                initSelf = this,
+                html = "<div class='heb-greg-date-picker ";
+
             html += settings.direction;
             html += " '>";
 
@@ -137,8 +146,8 @@
             html += "<span class='hgdp-label'>" + i18n("hebrew-date") + "</span>";
             //hebrew date - day
             html += "<select id='hgdp-hebrew--day' class='hgdp-day'>";
-            for (i=0; i<hebrewDaysList.length; i++) {
-                html += "<option value='" + (i+1) + "'>" + hebrewDaysList[i] + "</option>";
+            for (i=1; i<hebrewDaysList.length; i++) {
+                html += "<option value='" + i + "'>" + hebrewDaysList[i] + "</option>";
             }
             html += "</select>";
             //hebrew date - month
@@ -171,41 +180,237 @@
             html += "</div>";
 
             html += "<div class='hgdp-buttons'>";
-            html += "<span class='hgdp-buttons--btn'>" + i18n("save") + "</span>";
-            html += "<span class='hgdp-buttons--btn'>" + i18n("cancel") + "</span>";
-            html += "<span class='hgdp-buttons--btn'>" + i18n("clear") + "</span>";
+            html += "<span class='hgdp-buttons--btn' data-btn='save'>" + i18n("save") + "</span>";
+            html += "<span class='hgdp-buttons--btn' data-btn='cancel'>" + i18n("cancel") + "</span>";
+            html += "<span class='hgdp-buttons--btn' data-btn='clear'>" + i18n("clear") + "</span>";
             html += "</div>";
 
             html += "</div>";
             $("body").append(html);
 
+            initSelf.hide();
+
             containerEl.addClass("heb-greg-date-picker--button");
+
+            /**
+             * Add click event on the container for openning the selector box
+             */
+            containerEl.click(function() {
+                initSelf.show(containerEl, settings, currentDate);
+            });
+
+            /**
+             * Add buttons actions
+             */
+            $(".hgdp-buttons--btn").click(function() {
+                var action = $(this).data("btn");
+                switch (action) {
+                    case "save":
+                        if (settings.saveDate) {
+                            settings.saveDate(containerEl, settings.isHebrewYearLetters);
+                        }
+                        break;
+
+                    case "cancel":
+                        initSelf.hide();
+                        break;
+
+                    case "clear":
+                        if (settings.clearDate) {
+                            settings.clearDate(containerEl);
+                        }
+                        break;
+                }
+            });
+
+            function hidePopupOnEvent() {
+
+            }
+
+            /**
+             * Hide date picker panel when clicking inside and outside the menu
+             */
+            $(document).mouseup(function (e) {
+                var container = $(".heb-greg-date-picker");
+
+                if (!container.is(e.target) // if the target of the click isn't the container...
+                    && container.has(e.target).length === 0) // ... nor a descendant of the container
+                {
+                    container.hide();
+                }
+            });
+
+            /**
+             * Hide date picker panel when pressing on the ESC key
+             */
+            $(document).ready(function(){
+                $(document).bind('keydown', function(e) {
+                    if (e.which == 27) {
+                        $(".heb-greg-date-picker").hide();
+                    }
+                });
+            });
+
+            /**
+             * Add change() listeners for all input fields in order to update greg/heb dates
+             */
+            $("#hgdp-hebrew--day, #hgdp-hebrew--month, #hgdp-hebrew--year").change(function() {
+                updateByHebrew(settings.isHebrewYearLetters);
+            });
+            $("#hgdp-gregorian--day, #hgdp-gregorian--month, #hgdp-gregorian--year").change(function() {
+                updateByGregorian(settings.isHebrewYearLetters);
+            });
 
             alreadyConstruct = true;
         },
-        setDateOutput: function(containerEl, currentDate) {
-            containerEl.html(currentDate);
+
+        hide: function() {
+            $(".heb-greg-date-picker").hide();
+        },
+
+        show: function(containerEl, settings, date) {
+            var datePickerEl = $(".heb-greg-date-picker");
+
+            var containerPos = containerEl.offset();
+            var top = containerPos.top + containerEl.height() + 1;
+            if (settings.direction === "rtl") {
+                var right = document.documentElement.clientWidth - containerPos.left - containerEl.outerWidth();
+                datePickerEl.css('right', right);
+            }
+            else {
+                datePickerEl.css('left', containerPos.left);
+            }
+            datePickerEl.css('top', top);
+            datePickerEl.show();
+        },
+
+        setHebDate: function(year, month, day, isYearsLetters) {
+            $("#hgdp-hebrew--year").val(isYearsLetters ? HebYearConverter.num2letters(year) : year);
+            $("#hgdp-hebrew--month option[value='" + month + "']").prop("selected", true);
+            $("#hgdp-hebrew--day option[value='" + day + "']").prop("selected", true);
+        },
+
+        getHebDate: function(isHebrewLetters) { //return array: DD, MM, YYYY
+            var hebYear = $("#hgdp-hebrew--year").val();
+            var hebMonth = $("#hgdp-hebrew--month option:selected").val() - 0; //convert to int
+            var hebDay = $("#hgdp-hebrew--day option:selected").val() - 0; //convert to int
+            if (isHebrewLetters) {
+                hebYear = HebYearConverter.letters2num(hebYear);
+            }
+            hebYear = hebYear - 0; // make sure its int
+            if (! HebGregConverter.isLeapYear(hebYear) && hebMonth === 6) {
+                hebMonth = 7;
+            }
+            return [hebDay, hebMonth, hebYear];
+        },
+
+        setGregDate: function(year, month, day) {
+            $("#hgdp-gregorian--year").val(year);
+            $("#hgdp-gregorian--month option[value='" + month + "']").prop("selected", true);
+            $("#hgdp-gregorian--day option[value='" + day + "']").prop("selected", true);
+        },
+
+        getGregDate: function() { //return array: DD, MM, YYYY
+            var gregYear = $("#hgdp-gregorian--year").val() - 0;
+            var gregMonth = $("#hgdp-gregorian--month option:selected").val() - 0;
+            var gregDay = $("#hgdp-gregorian--day option:selected").val() - 0;
+            gregMonth--;
+            return [gregDay, gregMonth, gregYear];
+        },
+
+        //hebDate & gregDate format: D/M/Y
+        setDateOutput: function(containerEl, hebDate, gregDate, isHebrewYearLetters) {
+            var hebYear = $("#hgdp-hebrew--year").val();
+            var hebMonth = $("#hgdp-hebrew--month option:selected").html();
+            var hebDay = $("#hgdp-hebrew--day option:selected").html();
+            var gregYear = $("#hgdp-gregorian--year").val();
+            var gregMonth = $("#hgdp-gregorian--month option:selected").html();
+            var gregDay = $("#hgdp-gregorian--day option:selected").html();
+            var output = hebDay + " " + hebMonth + ", " + hebYear + "; " + gregMonth + " " + gregDay + ", " + gregYear;
+
+            containerEl.html(output);
+
+            if (isHebrewYearLetters) {
+                hebDate[2] = HebYearConverter.letters2num(hebDate[2]);
+            }
+
+            containerEl.data("hebdate", hebDate[0] + "/" + hebDate[1] + "/" + hebDate[2]);
+            containerEl.data("gregdate", gregDate[0] + "/" + gregDate[1] + "/" + gregDate[2]);
+        },
+
+        clearContainerOutput: function(containerEl) {
+            containerEl.html(i18n("no-date-selected"));
+            containerEl.data("hebdate", "");
+            containerEl.data("gregdate", "");
         }
     };
+
+    function updateByGregorian(isHebrewLetters) {
+        var gregDate = UIManager.getGregDate();
+        var hebDate = HebGregConverter.greg2heb(new Date(gregDate[2], gregDate[1], gregDate[0]));
+        var hebArr = hebDate.split("/"); // D/M/Y
+        UIManager.setHebDate(hebArr[2], hebArr[1], hebArr[0], isHebrewLetters);
+    }
+
+    function updateByHebrew(isHebrewLetters) {
+        var hebDate = UIManager.getHebDate(isHebrewLetters);
+        var gregDate = HebGregConverter.heb2greg(hebDate[2], hebDate[1], hebDate[0]);
+        UIManager.setGregDate(gregDate.getFullYear(), gregDate.getMonth() + 1, gregDate.getDate());
+    }
+
+    function saveDate(containerEl, isHebrewLetters) {
+        var hebDate = UIManager.getHebDate(isHebrewLetters);
+        var gregDate = UIManager.getGregDate();
+
+        //set container date string
+        UIManager.setDateOutput(containerEl, hebDate, gregDate);
+
+        UIManager.hide();
+    }
+
+    function clearDate(containerEl) {
+        UIManager.clearContainerOutput(containerEl);
+        UIManager.hide();
+    }
 
     function HebGregDatePicker(containerEl, _settings) {
         var containerEl = containerEl,
             settings = _settings,
             currentDate = i18n("no-date-selected");
 
-        if (settings.defaultDate === "now") {
+        var hebDate = containerEl.data("hebdate");
+        var gregDate = containerEl.data("gregdate");
+
+        if (hebDate) {
+            var hebArr = hebDate.split("/"); // D/M/Y
+            gregDate = HebGregConverter.heb2greg(hebArr[2], hebArr[1], hebArr[0]);
+            currentDate = gregDate;
+        }
+        else if (gregDate) {
+            var gregArr = gregDate.split("/"); // D/M/Y
+            currentDate = new Date(gregArr[2], gregArr[1], gregArr[0]);
+            hebDate = HebGregConverter.greg2heb(currentDate);
+        }
+        else if (settings.defaultDate === "now") {
             currentDate = new Date();
+            gregDate = currentDate.getDate() + "/" + (currentDate.getMonth()+1) + "/" + currentDate.getFullYear();
+            hebDate = HebGregConverter.greg2heb(currentDate);
         }
 
-        UIManager.init(containerEl, settings);
-        UIManager.setDateOutput(containerEl, currentDate);
+        UIManager.init(containerEl, settings, currentDate);
+        UIManager.setGregDate(currentDate.getFullYear(), currentDate.getMonth()+1, currentDate.getDate());
+        updateByGregorian(settings.isHebrewYearLetters);
+        UIManager.setDateOutput(containerEl, hebDate, gregDate, settings.isHebrewYearLetters);
     }
 
     $.fn.hebGregDatePicker = function(options) {
         var _settings = $.extend({
             // These are the defaults.
             direction: "rtl",
-            defaultDate: "now"
+            defaultDate: "now",
+            isHebrewYearLetters: true,
+            saveDate: saveDate,
+            clearDate: clearDate
         }, options );
 
         var hebGregDP = new HebGregDatePicker(this, _settings);
@@ -214,4 +419,4 @@
 
 
 
-})(window, jQuery);
+})(window, jQuery, HebGregConverter, HebYearConverter);

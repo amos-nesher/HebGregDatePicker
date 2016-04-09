@@ -249,6 +249,7 @@
     //          Tamuz=11
     //          Av=12
     //          Elul=13
+    //The function returns the grogerian date Date object
     function hebToGreg(nYearH, nMonthH, nDateH) {
         var nLengthOfYear,
             bLeap,
@@ -316,9 +317,10 @@
     }
 
     // This function converts a Gregorian date into the Hebrew date.  The
-    // function returns the hebrew month as a string in the format M/D/Y.
+    // function returns the hebrew month as a string in the format D/M/Y.
     // See function HebToGreg() for the definition of the month numbers.
     function gregToHeb(dGreg) {
+    //function gregToHeb(gYear, gMonth, gDay) {
         var nYearH,
             nMonthH,
             DateH,
@@ -333,6 +335,8 @@
             nMonthLen,
             bWhile,
             d1900 = new Date(1900, 0, 1);
+
+        //var dGreg = new Date(gYear, gMonth, gDay);
 
         // The basic algorythm to get Hebrew date for the Gregorian date dGreg.
         // 1) Find out how many days dGreg is after creation.
@@ -439,7 +443,7 @@
             //Add the remaining days to Date
             nDateH = nDays + 1;
         }
-        return nMonthH + "/" + nDateH + "/" + nYearH;
+        return nDateH + "/" + nMonthH + "/" + nYearH;
     }
 
     function sameDate(d1, d2) {
@@ -450,7 +454,8 @@
 
     window.HebGregConverter = {
         heb2greg: hebToGreg,
-        greg2heb: gregToHeb
+        greg2heb: gregToHeb,
+        isLeapYear: isLeapYear
     };
 
 
