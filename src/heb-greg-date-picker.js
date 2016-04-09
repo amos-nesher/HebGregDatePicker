@@ -5,7 +5,9 @@
 /**
  * TODO mark error if year (greg and hebrew) are not correct
  * TODO handle Adar A and Adar B for leap and non leap years
- * TODO make the box be below the container (or on top) - according to the settings.
+ * TODO Add button to the panel - "now" for setting now date
+ * TODO refactor code and clean it.
+ * TODO set distribution code.
  */
 
 (function(window, $, HebGregConverter, HebYearConverter) {
@@ -126,10 +128,19 @@
         {name: i18n("december"), value: 12}
     ];
 
-    var alreadyConstruct = false;
+    var settings = {
+        direction: "rtl",
+        defaultDate: "now",
+        isHebrewYearLetters: true,
+        saveDate: saveDate,
+        clearDate: clearDate
+    };
+
+    var alreadyConstruct = false,
+        currentContainerEl = null;
 
     var UIManager = {
-        init: function(containerEl, settings, currentDate) {
+        init: function() {
             if (alreadyConstruct) {
                 return;
             }
@@ -190,15 +201,6 @@
 
             initSelf.hide();
 
-            containerEl.addClass("heb-greg-date-picker--button");
-
-            /**
-             * Add click event on the container for openning the selector box
-             */
-            containerEl.click(function() {
-                initSelf.show(containerEl, settings, currentDate);
-            });
-
             /**
              * Add buttons actions
              */
@@ -207,7 +209,7 @@
                 switch (action) {
                     case "save":
                         if (settings.saveDate) {
-                            settings.saveDate(containerEl, settings.isHebrewYearLetters);
+                            settings.saveDate(settings.isHebrewYearLetters);
                         }
                         break;
 
@@ -217,7 +219,7 @@
 
                     case "clear":
                         if (settings.clearDate) {
-                            settings.clearDate(containerEl);
+                            settings.clearDate();
                         }
                         break;
                 }
@@ -319,7 +321,7 @@
         },
 
         //hebDate & gregDate format: D/M/Y
-        setDateOutput: function(containerEl, hebDate, gregDate, isHebrewYearLetters) {
+        setDateOutput: function(containerEl, hebDate, gregDate) {
             var hebYear = $("#hgdp-hebrew--year").val();
             var hebMonth = $("#hgdp-hebrew--month option:selected").html();
             var hebDay = $("#hgdp-hebrew--day option:selected").html();
@@ -329,13 +331,8 @@
             var output = hebDay + " " + hebMonth + ", " + hebYear + "; " + gregMonth + " " + gregDay + ", " + gregYear;
 
             containerEl.html(output);
-
-            if (isHebrewYearLetters) {
-                hebDate[2] = HebYearConverter.letters2num(hebDate[2]);
-            }
-
-            containerEl.data("hebdate", hebDate[0] + "/" + hebDate[1] + "/" + hebDate[2]);
-            containerEl.data("gregdate", gregDate[0] + "/" + gregDate[1] + "/" + gregDate[2]);
+            containerEl.data("hebdate", hebDate);
+            containerEl.data("gregdate", gregDate);
         },
 
         clearContainerOutput: function(containerEl) {
@@ -358,19 +355,36 @@
         UIManager.setGregDate(gregDate.getFullYear(), gregDate.getMonth() + 1, gregDate.getDate());
     }
 
-    function saveDate(containerEl, isHebrewLetters) {
-        var hebDate = UIManager.getHebDate(isHebrewLetters);
+    function saveDate(isHebrewYearLetters) {
+        var hebDate = UIManager.getHebDate(isHebrewYearLetters);
         var gregDate = UIManager.getGregDate();
-
-        //set container date string
-        UIManager.setDateOutput(containerEl, hebDate, gregDate);
+        var hebDateOutput = hebDate[0] + "/" + hebDate[1] + "/" + hebDate[2];
+        var gregDateOutput = gregDate[0] + "/" + gregDate[1] + "/" + gregDate[2];
+         //set container date string
+        UIManager.setDateOutput(currentContainerEl, hebDateOutput, gregDateOutput);
 
         UIManager.hide();
     }
 
-    function clearDate(containerEl) {
-        UIManager.clearContainerOutput(containerEl);
+    function clearDate() {
+        UIManager.clearContainerOutput(currentContainerEl);
         UIManager.hide();
+    }
+
+    function openDatePickerPanel(containerEl, settings) {
+        currentContainerEl = containerEl;
+
+        var hebDate,
+            hebArr,
+            currentDate;
+
+        hebDate = containerEl.data("hebdate");
+        hebArr = hebDate.split("/"); // D/M/Y
+
+        currentDate = HebGregConverter.heb2greg(hebArr[2]-0, hebArr[1]-0, hebArr[0]-0);
+        UIManager.setGregDate(currentDate.getFullYear(), currentDate.getMonth()+1, currentDate.getDate());
+        updateByGregorian(settings.isHebrewYearLetters);
+        UIManager.show(containerEl, settings, currentDate);
     }
 
     function HebGregDatePicker(containerEl, _settings) {
@@ -383,7 +397,7 @@
 
         if (hebDate) {
             var hebArr = hebDate.split("/"); // D/M/Y
-            gregDate = HebGregConverter.heb2greg(hebArr[2], hebArr[1], hebArr[0]);
+            gregDate = HebGregConverter.heb2greg(hebArr[2]-0, hebArr[1]-0, hebArr[0]-0);
             currentDate = gregDate;
         }
         else if (gregDate) {
@@ -400,7 +414,19 @@
         UIManager.init(containerEl, settings, currentDate);
         UIManager.setGregDate(currentDate.getFullYear(), currentDate.getMonth()+1, currentDate.getDate());
         updateByGregorian(settings.isHebrewYearLetters);
-        UIManager.setDateOutput(containerEl, hebDate, gregDate, settings.isHebrewYearLetters);
+        UIManager.setDateOutput(containerEl, hebDate, gregDate);
+
+        /**
+         * Add button class to the container
+         */
+        containerEl.addClass("heb-greg-date-picker--button");
+
+        /**
+         * Add click event on the container for openning the selector box
+         */
+        containerEl.click(function() {
+            openDatePickerPanel(containerEl, settings);
+        });
     }
 
     $.fn.hebGregDatePicker = function(options) {
@@ -415,7 +441,9 @@
 
         var hebGregDP = new HebGregDatePicker(this, _settings);
         return this;
-    }
+    };
+
+    UIManager.init()
 
 
 
