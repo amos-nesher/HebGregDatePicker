@@ -47,7 +47,7 @@
 
          Sample Usage:
          // Converts AdarB/7/5765 to 4/6/2005
-         alert(HebToGreg(5765, 7, 26))
+         alert(hebToGreg(5765, 7, 26))
 
     */
 
