@@ -18,14 +18,11 @@
   },
   "homepage": "https://github.com/amos-nesher/HebGregDatePicker#readme",
   "devDependencies": {
-    "css-loader": "0.23.1",
-    "json-loader": "0.5.4",
-    "sass": "0.5.0",
-    "sass-loader": "3.1.2",
-    "script-loader": "0.6.1",
-    "style-loader": "0.13.0",
-    "webpack": "1.12.13",
-    "webpack-dev-server": "1.14.1"
+    "grunt": "1.0.1",
+    "grunt-contrib-clean": "1.0.0",
+    "grunt-contrib-concat": "1.0.1",
+    "grunt-contrib-copy": "1.0.0",
+    "grunt-contrib-uglify": "2.0.0"
   },
   "dependencies": {
     "jquery": "1.12.0"

@@ -1,0 +1,106 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="heb-greg-date-picker.css">
+
+    <script type="text/javascript" src="../node_modules/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="heb-year-converter.js"></script>
+    <script type="text/javascript" src="heb-greg-converter.js"></script>
+    <script type="text/javascript" src="heb-greg-date-picker.js"></script>
+
+
+    <style>
+        body {
+            direction: rtl;
+        }
+        .date-picker {
+            border: 1px solid lightgray;
+            width: 300px;
+            height: 21px;
+            text-align: right;
+        }
+    </style>
+
+    <script>
+        var picker5 = null;
+        $(document).ready(function() {
+            $("#date-picker-1").hebGregDatePicker({"gregHiddenId": "my-hidden-date1", "hebHiddenId": "my-hidden-date2" });
+            $("#date-picker-2").hebGregDatePicker({"gregHiddenId": "my-hidden-date" });
+            $("#date-picker-3").hebGregDatePicker({ });
+            $("#date-picker-4").hebGregDatePicker({ });
+            picker5 = $("#date-picker-5").hebGregDatePicker({ });
+
+            $("#output-button").click(printDates);
+        });
+
+        function printDates() {
+            var output = "";
+            var h, g;
+            for (var i=1; i<=5; i++) {
+                h = $("#date-picker-" + i).data("hebdate");
+                g = $("#date-picker-" + i).data("gregdate");
+
+                output += h + "; " + g + "\n";
+            }
+
+            output += "hidden 1 greg: " + $("#my-hidden-date1").val() + "\n";
+            output += "hidden 1 heb:  " + $("#my-hidden-date2").val() + "\n";
+
+
+            output += "hidden 2 greg: " + $("#my-hidden-date").val() + "\n";
+
+            alert( output );
+        }
+    </script>
+
+</head>
+<body>
+
+<h1>HebGregDatePicker Project</h1>
+
+<p>
+    Date 1
+</p>
+<div class="date-picker" id="date-picker-1" date-hebdate="" data-gregdate="1/1/2010"></div>
+<input type="hidden" id="my-hidden-date1" value="not set yet!"/>
+<input type="hidden" id="my-hidden-date2" value="not set yet!"/>
+
+<p>
+    Date 2
+    <br />
+    <input type="text" id="date-picker-2" readonly name="date-picker-2" value="" data-gregdate="1/12/2012"/>
+    <input type="hidden" id="my-hidden-date" value="not set yet!"/>
+</p>
+<!--<div class="date-picker" id="date-picker-2"></div>-->
+
+
+<p>
+    Date 3
+</p>
+<div class="date-picker" id="date-picker-3"></div>
+
+<p>
+    Date 4
+</p>
+<div class="date-picker" id="date-picker-4"></div>
+
+<p>
+    Date 5
+</p>
+<div class="date-picker" id="date-picker-5"></div>
+<div>
+    External clear:
+    <button onclick="picker5.clearDate();">Clear</button>
+</div>
+
+
+<p>
+    Output:
+    <button id="output-button">Report</button>
+</p>
+
+
+
+
+</body>
+</html>

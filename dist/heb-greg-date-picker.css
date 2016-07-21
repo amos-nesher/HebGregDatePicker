@@ -1,0 +1,43 @@
+.rtl {
+    direction: rtl; }
+.rtl .hgdp-label {
+    margin-left: 5px; }
+.rtl .hgdp-day {
+    margin-left: 5px; }
+.rtl .hgdp-month {
+    margin-left: 5px; }
+
+.ltr {
+    direction: ltr; }
+
+.heb-greg-date-picker {
+    position: absolute;
+    background-color: #fff;
+    display: inline-block;
+    padding: 10px;
+    border: 1px solid #555; }
+.heb-greg-date-picker .hgdp-date-selector {
+    padding-bottom: 10px; }
+.heb-greg-date-picker .hgdp-date-selector .hgdp-label {
+    width: 50px; }
+.heb-greg-date-picker .hgdp-date-selector .hgdp-day {
+    width: 50px;
+    height: 21px; }
+.heb-greg-date-picker .hgdp-date-selector .hgdp-month {
+    width: 70px;
+    height: 21px; }
+.heb-greg-date-picker .hgdp-date-selector .hgdp-year {
+    width: 80px; }
+.heb-greg-date-picker .hgdp-buttons {
+    text-align: center; }
+.heb-greg-date-picker .hgdp-buttons .hgdp-buttons--btn {
+    display: inline-block;
+    padding-left: 15px;
+    text-decoration: underline;
+    color: #0086b3; }
+.heb-greg-date-picker .hgdp-buttons .hgdp-buttons--btn:hover {
+    text-decoration: none;
+    cursor: pointer; }
+
+.heb-greg-date-picker--button {
+    cursor: pointer; }
